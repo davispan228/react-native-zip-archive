@@ -155,6 +155,14 @@ public class RNZipArchiveModule extends ReactContextBaseJavaModule {
             final ZipEntry entry = entries.nextElement();
             if (entry.isDirectory()) continue;
 
+            String zipName = entry.getName();
+            if(zipName.contains("../")) continue;
+            if(zipName.length() > 0) {
+              String[] zipNameArray = zipName.split("/");
+              zipName = zipNameArray[zipNameArray.length-1];
+            }
+
+
             StreamUtil.ProgressCallback cb = new StreamUtil.ProgressCallback() {
               @Override
               public void onCopyProgress(long bytesRead) {
@@ -171,7 +179,7 @@ public class RNZipArchiveModule extends ReactContextBaseJavaModule {
               }
             };
 
-            File fout = new File(destDirectory, entry.getName());
+            File fout = new File(destDirectory, zipName);
             ensureZipPathSafety(fout, destDirectory);
 
             if (!fout.exists()) {
@@ -259,7 +267,15 @@ public class RNZipArchiveModule extends ReactContextBaseJavaModule {
             File fout;
             while ((entry = zipIn.getNextEntry()) != null) {
               if (entry.isDirectory()) continue;
-              fout = new File(destDirectory, entry.getName());
+
+              String zipName = entry.getName();
+              if(zipName.contains("../")) continue;
+              if(zipName.length() > 0) {
+                String[] zipNameArray = zipName.split("/");
+                zipName = zipNameArray[zipNameArray.length-1];
+              }
+
+              fout = new File(destDirectory, zipName);
 
               ensureZipPathSafety(fout, destDirectory);
 
@@ -268,7 +284,7 @@ public class RNZipArchiveModule extends ReactContextBaseJavaModule {
                 (new File(fout.getParent())).mkdirs();
               }
 
-              final ZipEntry finalEntry = entry;
+              final String finalZipName = zipName;
               StreamUtil.ProgressCallback cb = new StreamUtil.ProgressCallback() {
                 @Override
                 public void onCopyProgress(long bytesRead) {
@@ -280,7 +296,7 @@ public class RNZipArchiveModule extends ReactContextBaseJavaModule {
                   // update at most once per percent.
                   if (percentDone > lastTime) {
                     lastPercentage[0] = percentDone;
-                    updateProgress(extractedBytes[0], size, finalEntry.getName());
+                    updateProgress(extractedBytes[0], size, finalZipName);
                   }
                 }
               };
